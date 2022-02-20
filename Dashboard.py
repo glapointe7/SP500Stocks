@@ -2,41 +2,40 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from IPython.display import display
+from tabulate import tabulate
 
-def plotPercentageGainPerYear(dataset, cie):
-    cie_selected = dataset.loc[dataset['CompanyName'] == cie, ['Year', 'PercentageGain']]
-    
-    plt.figure(figsize=(20, 10))
-    plt.bar(cie_selected['Year'], cie_selected['PercentageGain'])
-
-    plt.xlabel('Year', fontsize=16)
-    plt.ylabel('Percentage Gain (%)', fontsize=16)
-    plt.title("Percentage gain in function of the year", fontsize=20)
-
+def plot(company, percentage_gains, stock_indices):
+    fig, axes = plt.subplots(2, 2, figsize=(25, 20))
+    plotPercentageGainPerYear(percentage_gains, company, axes[0, 0])
+    plotStockPriceTimeSeries(stock_indices, company, axes[0, 1])
+    plotStockPriceTimeSeries(stock_indices, company, axes[1, 0], last_days = 7)
+    plt.subplots_adjust(wspace=0.5, hspace=0.4)
     plt.show()
 
-def plotStockPriceTimeSeries(dataset, cie, last_days = 0):
+def plotPercentageGainPerYear(dataset, company, ax):
+    company_selected = dataset.loc[dataset['CompanyName'] == company, ['Year', 'PercentageGain']]
+    
+    ax.bar(company_selected['Year'], company_selected['PercentageGain'])
+
+    ax.set_xlabel('Year', fontdict={'fontsize': 14})
+    ax.set_ylabel('Percentage Gain (%)', fontdict={'fontsize': 14})
+    ax.set_title('Percentage gain in function of the year', fontdict={'fontsize': 17})
+
+def plotStockPriceTimeSeries(dataset, cie, ax, last_days = 0):
     stocks_company = dataset.loc[dataset['CompanyName'] == cie, 'Date':'Close']
     if last_days > 0:
         stocks_company = stocks_company.tail(last_days)
     stocks_company = stocks_company.set_index('Date')
 
-    plt.figure(figsize=(25, 10))
-    stocks_company['Open'].plot(label="Open")
-    stocks_company['Close'].plot(label="Close")
-    stocks_company['High'].plot(label="High")
-    stocks_company['Low'].plot(label="Low")
+    stocks_company['Open'].plot(label="Open", ax=ax, legend=True, rot=90)
+    stocks_company['Close'].plot(label="Close", ax=ax, legend=True, rot=90)
+    stocks_company['High'].plot(label="High", ax=ax, legend=True, rot=90)
+    stocks_company['Low'].plot(label="Low", ax=ax, legend=True, rot=90)
 
-    plt.xlabel('Date', fontsize=16)
-    plt.ylabel('Stock Price ($)', fontsize=16)
-    plt.title("Time series of the market stock prices (open, close, high and low)", fontsize=20)
-    plt.ticklabel_format(style='plain', axis='y')
-    plt.tick_params(axis='x', rotation=90)
-
-    plt.legend()
-    plt.show()
+    ax.set_xlabel('Date', fontdict={'fontsize': 14})
+    ax.set_ylabel('Stock Price ($)', fontdict={'fontsize': 14})
+    ax.set_title('Time series of the market stock prices (open, close, high and low)', fontdict={'fontsize': 17})
     
-
 def displayLastDayStockPriceAndGain(dataset, cie):
     stocks_cie = dataset.loc[dataset['CompanyName'] == cie, ['Date', 'Open', 'Close', 'Volume']]
     stocks_cie['PercentageGain'] = (stocks_cie['Close'] - stocks_cie['Open']) / stocks_cie['Open'] * 100
@@ -45,16 +44,20 @@ def displayLastDayStockPriceAndGain(dataset, cie):
     open_market_cap = stocks_cie['Open'].iloc[-1] * stocks_cie['Volume'].iloc[-1]
     close_market_cap = stocks_cie['Close'].iloc[-1] * stocks_cie['Volume'].iloc[-1]
     
-    print("\n---------------------------------------------------")
-    print("Date: {:%Y-%m-%d}".format(stocks_cie['Date'].iloc[-1]))
-    print("\nOpen: {:.6f} $/share".format(stocks_cie['Open'].iloc[-1]))
-    print("\nClose: {:.6f} $/share".format(stocks_cie['Close'].iloc[-1]))
-    print("\nNumber of flowing shares: {:d}".format(stocks_cie['Volume'].iloc[-1]))
-    print("\nPercentage gain: {:.2f} %".format(stocks_cie['PercentageGain'].iloc[-1]))
-    print("\nOpen market cap: {:.2f} $".format(open_market_cap))
-    print("\nClose market cap: {:.2f} $".format(close_market_cap))
-    print("\nMarket cap gain: {:.2f} $".format(close_market_cap - open_market_cap))
-    print("---------------------------------------------------\n")
+    last_day_stock_dict = {'Date': [stocks_cie['Date'].iloc[-1]],
+                           'Open': [stocks_cie['Open'].iloc[-1]],
+                           'Close': [stocks_cie['Close'].iloc[-1]],
+                           'Number of flowing shares': [stocks_cie['Volume'].iloc[-1]],
+                           'Percentage gain': [stocks_cie['PercentageGain'].iloc[-1]],
+                           'Open market cap': [open_market_cap],
+                           'Close market cap': [close_market_cap],
+                           'Market cap gain': [close_market_cap - open_market_cap]}
+    last_day_stock = pd.DataFrame(data=last_day_stock_dict)
+    
+    print(tabulate(tabular_data=last_day_stock, 
+                   showindex=False, 
+                   #disable_numparse=True, 
+                   headers=last_day_stock.columns) + "\n")
 
 def showBiggestCiesGainerOverTime(dataset, from_date):
     stocks = dataset.loc[dataset['Date'] > from_date, ['CompanyName' ,'Open', 'Close']]
