@@ -9,6 +9,7 @@ def plot(company, percentage_gains, stock_indices):
     plotPercentageGainPerYear(percentage_gains, company, axes[0, 0])
     plotStockPriceTimeSeries(stock_indices, company, axes[0, 1])
     plotStockPriceTimeSeries(stock_indices, company, axes[1, 0], last_days = 7)
+    axes[1, 1].axis('off')
     plt.subplots_adjust(wspace=0.5, hspace=0.4)
     plt.show()
 
@@ -45,18 +46,18 @@ def displayLastDayStockPriceAndGain(dataset, cie):
     close_market_cap = stocks_cie['Close'].iloc[-1] * stocks_cie['Volume'].iloc[-1]
     
     last_day_stock_dict = {'Date': [stocks_cie['Date'].iloc[-1]],
-                           'Open': [stocks_cie['Open'].iloc[-1]],
-                           'Close': [stocks_cie['Close'].iloc[-1]],
+                           'Open': [round(stocks_cie['Open'].iloc[-1], 2)],
+                           'Close': [round(stocks_cie['Close'].iloc[-1], 2)],
                            'Number of flowing shares': [stocks_cie['Volume'].iloc[-1]],
-                           'Percentage gain': [stocks_cie['PercentageGain'].iloc[-1]],
-                           'Open market cap': [open_market_cap],
-                           'Close market cap': [close_market_cap],
-                           'Market cap gain': [close_market_cap - open_market_cap]}
+                           'Percentage gain': [round(stocks_cie['PercentageGain'].iloc[-1], 2)],
+                           'Open market cap': [round(open_market_cap, 2)],
+                           'Close market cap': [round(close_market_cap, 2)],
+                           'Market cap gain': [round(close_market_cap - open_market_cap, 2)]}
     last_day_stock = pd.DataFrame(data=last_day_stock_dict)
     
     print(tabulate(tabular_data=last_day_stock, 
                    showindex=False, 
-                   #disable_numparse=True, 
+                   disable_numparse=True, 
                    headers=last_day_stock.columns) + "\n")
 
 def showBiggestCiesGainerOverTime(dataset, from_date):
